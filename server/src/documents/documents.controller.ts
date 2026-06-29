@@ -33,8 +33,8 @@ export class DocumentsController {
    * Mirrors: getProjectDocuments() — no permission check (Branch 1)
    */
   @Get('projects/:projectId/documents')
-  getProjectDocuments(@Param('projectId') projectId: string) {
-    return this.documentsService.getProjectDocuments(projectId);
+  getProjectDocuments(@Param('projectId') projectId: string, @CurrentUser() user: User) {
+    return this.documentsService.getProjectDocuments(projectId, user);
   }
 
   /**
@@ -42,8 +42,8 @@ export class DocumentsController {
    * Mirrors: getDocumentById() — no permission check (Branch 1)
    */
   @Get('documents/:id')
-  getDocumentById(@Param('id') id: string) {
-    return this.documentsService.getDocumentById(id);
+  getDocumentById(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.documentsService.getDocumentById(id, user);
   }
 
   /**
@@ -52,8 +52,8 @@ export class DocumentsController {
    * No permission check (Branch 1)
    */
   @Get('documents/:id/full')
-  getDocumentWithUserInfo(@Param('id') id: string) {
-    return this.documentsService.getDocumentWithUserInfo(id);
+  getDocumentWithUserInfo(@Param('id') id: string,  @CurrentUser() user: User) {
+    return this.documentsService.getDocumentWithUserInfo(id, user);
   }
 
   /**

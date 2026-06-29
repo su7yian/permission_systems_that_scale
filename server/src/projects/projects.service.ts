@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, User } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthorizationError } from '../common/errors/authorization.error';
@@ -26,9 +26,7 @@ export class ProjectsService {
    * Mirrors: getAllProjects()  in dal/projects/queries.ts
    * PERMISSION: must be authenticated; role determines filter.
    */
-  async getAllProjects(user: User, ordered = false) {
-    // PERMISSION:
-    if (user == null) throw new AuthorizationError();
+  async getAllProjects(user: User, ordered: boolean = false) {
 
     return this.prisma.project.findMany({
       where: this.userWhereClause(user),
@@ -40,10 +38,16 @@ export class ProjectsService {
    * Mirrors: getProjectById()  in dal/projects/queries.ts
    * PERMISSION: none (intentional in Branch 1)
    */
-  async getProjectById(id: string) {
-    return this.prisma.project.findUnique({ where: { id } });
+  async getProjectById(id: string, user: User) {
+        const project= await this.prisma.project.findUnique({ where: { id } });
+       if (!project){
+       throw new NotFoundException('Not found');
+      }
+      if(user.role !=='admin' && user.department !== project.department){
+         throw new ForbiddenException('Access denied');
   }
-
+       return project;
+       }
   // ── Mutations ─────────────────────────────────────────────────────────────
 
   /**
@@ -52,7 +56,7 @@ export class ProjectsService {
    */
   async createProject(user: User, dto: CreateProjectDto) {
     // PERMISSION:
-    if (user == null || user.role !== 'admin') {
+    if (user.role !== 'admin') {
       throw new AuthorizationError();
     }
 
@@ -72,7 +76,7 @@ export class ProjectsService {
    */
   async updateProject(user: User, projectId: string, dto: UpdateProjectDto) {
     // PERMISSION:
-    if (user == null || user.role !== 'admin') {
+    if (user.role !== 'admin') {
       throw new AuthorizationError();
     }
 
@@ -88,7 +92,7 @@ export class ProjectsService {
    */
   async deleteProject(user: User, projectId: string) {
     // PERMISSION:
-    if (user == null || user.role !== 'admin') {
+    if (user.role !== 'admin') {
       throw new AuthorizationError();
     }
 

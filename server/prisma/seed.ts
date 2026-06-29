@@ -3,6 +3,7 @@
  * Exact conversion of src/drizzle/seed.ts.
  * Run with:  npm run db:seed   OR   npx prisma db seed
  */
+import "dotenv/config";
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, UserRole, DocumentStatus } from '../src/generated/prisma/client';
@@ -10,6 +11,7 @@ import { PrismaClient, UserRole, DocumentStatus } from '../src/generated/prisma/
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL})
 })
 async function seed() {
+  console.log(process.env.DATABASE_URL);
   console.log('🌱 Seeding database...');
 
   // ── Clear existing data (reverse dependency order) ─────────────────────
@@ -45,7 +47,7 @@ async function seed() {
     return u;
   };
 
-  // ── Create projects ─────────────────────────────────────────────────────
+  // ── Create project─────────────────────────────────────────────────────
   const projectsData = [
     // Engineering Projects
     {

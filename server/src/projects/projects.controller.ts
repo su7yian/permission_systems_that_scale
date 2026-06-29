@@ -43,8 +43,9 @@ export class ProjectsController {
    * No permission check (intentional Branch 1 flaw)
    */
   @Get(':id')
-  getProjectById(@Param('id') id: string) {
-    return this.projectsService.getProjectById(id);
+  getProjectById(@Param('id') id: string, @CurrentUser() user: User,
+  ) {
+    return this.projectsService.getProjectById(id, user);
   }
 
   /**
