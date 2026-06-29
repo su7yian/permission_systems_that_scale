@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// enums  (mirrors Drizzle pgEnum definitions in schema/user.ts & document.ts)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  viewer
+  editor
+  author
+  admin
+}
+
+enum DocumentStatus {
+  draft
+  published
+  archived
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User  (mirrors UserTable in src/drizzle/schema/user.ts)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  department String
+  name       String
+  role       UserRole @default(viewer)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  ownedProjects    Project[]  @relation("ProjectOwner")
+  createdDocuments Document[] @relation("DocumentCreator")
+  editedDocuments  Document[] @relation("DocumentLastEditor")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Project  (mirrors ProjectTable in src/drizzle/schema/project.ts)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  ownerId     String   @map("owner_id")
+  department  String?  // nullable = cross-department project
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  owner     User       @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  documents Document[]
+
+  @@map("projects")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Document  (mirrors DocumentTable in src/drizzle/schema/document.ts)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Document {
+  id             String         @id @default(uuid())
+  title          String
+  content        String
+  status         DocumentStatus @default(draft)
+  isLocked       Boolean        @default(false) @map("is_locked")
+  projectId      String         @map("project_id")
+  creatorId      String         @map("creator_id")
+  lastEditedById String         @map("last_edited_by_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  project      Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator      User    @relation("DocumentCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  lastEditedBy User    @relation("DocumentLastEditor", fields: [lastEditedById], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
