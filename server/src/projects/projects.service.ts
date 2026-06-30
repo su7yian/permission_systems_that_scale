@@ -4,11 +4,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { can } from 'src/authorization/rbac';
+import { canReadProjects } from 'src/authorization/read';
 
 /**
  * Mirrors src/dal/projects/queries.ts  AND  src/dal/projects/mutations.ts.
- *
- * BRANCH 1 PERMISSION RULES (preserved exactly — intentional flaws included):
  *
  *   getAllProjects  → must be authenticated; admin sees all, others see own-dept + null-dept
  *   getProjectById → NO permission check (intentional — anyone with x-user-id can call it)
@@ -22,9 +21,7 @@ export class ProjectsService {
 
   // ── Queries ───────────────────────────────────────────────────────────────
 
-  /**
-   * Mirrors: getAllProjects()  in dal/projects/queries.ts
-   */
+   // Mirrors: getAllProjects()  in dal/projects/queries.ts
   
   async getAllProjects(user: User, ordered: boolean = false) {
 
@@ -42,8 +39,10 @@ export class ProjectsService {
        if (!project){
        throw new NotFoundException('Not found');
       }
-         this.requireSameDepartment(user, project.department);
-       return project;
+        if(!canReadProjects(user, project)){ 
+          throw new UnauthorizedException();
+        }
+      return project;
        }
   // ── Mutations ─────────────────────────────────────────────────────────────
 
@@ -97,15 +96,13 @@ if (!can(user.role, "project:update")) {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-private requireSameDepartment(user: User, department: string | null) {
+
+/* private requireSameDepartment(user: User, department: string | null) {
   if (user.role !== 'admin' && user.department !== department) {
     throw new UnauthorizedException('Access denied');
-  }
-}
-  /**
-   * Mirrors: userWhereClause()  in dal/projects/queries.ts
-   * Returns the Prisma WHERE equivalent of Drizzle's or(eq(...), isNull(...)).
-   */
+  } */
+
+   // Mirrors: userWhereClause()  in dal/projects/queries.ts
   private userWhereClause(
     user: Pick<User, 'role' | 'department'>,
   ): Prisma.ProjectWhereInput | undefined {
@@ -113,7 +110,6 @@ private requireSameDepartment(user: User, department: string | null) {
       case 'author':
       case 'viewer':
       case 'editor':
-        // Drizzle: or(eq(ProjectTable.department, user.department), isNull(ProjectTable.department))
         return {
           OR: [
             { department: user.department },

@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { can } from 'src/authorization/rbac';
+import { canReadDocuments } from 'src/authorization/read';
 /**
  * Mirrors src/dal/documents/queries.ts  AND  src/dal/documents/mutations.ts.
  */
@@ -24,10 +25,13 @@ export class DocumentsService {
     throw new NotFoundException('Not Found') }
 
     const project = document.project;
-     this.requireSameDepartment(user, project.department);
-
+    
+        if(!canReadDocuments(user, project)){ 
+          throw new UnauthorizedException();
+        }
     return document;
   }
+
   
   /**
    * Mirrors: getProjectDocuments()  in dal/documents/queries.ts
@@ -45,8 +49,10 @@ export class DocumentsService {
     throw new NotFoundException('Project not found');
   }
    
-    this.requireSameDepartment(user, project.department);
 
+    if(!canReadDocuments(user, project)){ 
+          throw new UnauthorizedException();
+        }
     return this.prisma.document.findMany({
       where: { projectId },
       select: {
@@ -85,8 +91,11 @@ export class DocumentsService {
     throw new NotFoundException('Not Found') }
 
     const project = document.project;
-      this.requireSameDepartment(user, project.department);
-      return document;
+
+        if(!canReadDocuments(user, project)){ 
+          throw new UnauthorizedException();
+        }
+    return document;
   }
 
   // ── Mutations ─────────────────────────────────────────────────────────────
@@ -142,10 +151,4 @@ if (!can(user.role, "document:delete")) {
 
     return this.prisma.document.delete({ where: { id: documentId } });
   }
-    // ── Helpers ───────────────────────────────────────────────────────────────
-private requireSameDepartment(user: User, department: string | null) {
-  if (user.role !== 'admin' && user.department !== department) {
-    throw new UnauthorizedException('Access denied');
-  }
-}
 }
