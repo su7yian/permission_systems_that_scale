@@ -1,10 +1,10 @@
 import { Project, User } from "../generated/prisma/client";
-import {can} from "./rbac";
+import {can} from "./roleBasedAccess";
 
 function canReadProjects(
     user: Pick< User, "role" | "department">,
      project: Pick<Project,"department">
-    ){
+    ):boolean{
      if(can(user.role,"project:read:all")) {
         return true;
      }

@@ -3,8 +3,8 @@ import { Prisma, User } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { can } from 'src/authorization/rbac';
-import { canReadProjects } from 'src/authorization/read';
+import { can } from 'src/authorization/roleBasedAccess';
+import { canReadProjects } from 'src/authorization/readAccess';
 
 /**
  * Mirrors src/dal/projects/queries.ts  AND  src/dal/projects/mutations.ts.

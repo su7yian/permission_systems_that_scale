@@ -3,8 +3,9 @@ import { User } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
-import { can } from 'src/authorization/rbac';
-import { canReadDocuments } from 'src/authorization/read';
+import { can } from 'src/authorization/roleBasedAccess';
+import { canReadDocuments } from 'src/authorization/readAccess';
+import { canUpdateDocument } from 'src/authorization/updateAcess';
 /**
  * Mirrors src/dal/documents/queries.ts  AND  src/dal/documents/mutations.ts.
  */
@@ -29,10 +30,12 @@ export class DocumentsService {
         if(!canReadDocuments(user, project)){ 
           throw new UnauthorizedException();
         }
+        if(!can(user.role,"document:read:drafts")){
+         throw new UnauthorizedException();
+    }
     return document;
-  }
+}
 
-  
   /**
    * Mirrors: getProjectDocuments()  in dal/documents/queries.ts
    * Drizzle join → Prisma select with nested relation.
@@ -53,6 +56,9 @@ export class DocumentsService {
     if(!canReadDocuments(user, project)){ 
           throw new UnauthorizedException();
         }
+    if(!can(user.role,"document:read:drafts")){
+         throw new UnauthorizedException();
+    }
     return this.prisma.document.findMany({
       where: { projectId },
       select: {
@@ -95,6 +101,9 @@ export class DocumentsService {
         if(!canReadDocuments(user, project)){ 
           throw new UnauthorizedException();
         }
+        if(!can(user.role,"document:read:drafts")){
+         throw new UnauthorizedException();
+    }
     return document;
   }
 
@@ -127,10 +136,9 @@ if (!can(user.role, "document:create")) {
    */
   async updateDocument(user: User, documentId: string, dto: UpdateDocumentDto) {
     // PERMISSION:
-if (!can(user.role, "document:update")) {
-  throw new UnauthorizedException('Not allowded!');
-}
-
+if(!canUpdateDocument){
+  throw new UnauthorizedException();
+} 
     return this.prisma.document.update({
       where: { id: documentId },
       data: {
