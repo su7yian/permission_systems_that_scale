@@ -1,28 +1,11 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { User } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthorizationError } from '../common/errors/authorization.error';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
-import { ProjectScalarFieldEnum } from 'src/generated/prisma/internal/prismaNamespace';
-import { NotFoundError } from 'rxjs';
-
+import { can } from 'src/authorization/rbac';
 /**
  * Mirrors src/dal/documents/queries.ts  AND  src/dal/documents/mutations.ts.
- *
- * BRANCH 1 PERMISSION RULES (preserved exactly — intentional flaws included):
- *
- *   getDocumentById         → NO permission check
- *   getProjectDocuments     → NO permission check
- *   getDocumentWithUserInfo → NO permission check
- *
- *   createDocument  → blocks null + editor
- *                     ⚠️  INTENTIONAL FLAW: "viewer" role is NOT blocked here!
- *                     The original comment says: "FIX: Missing viewer role check"
- *                     This is a deliberate learning moment — do NOT fix it.
- *
- *   updateDocument  → blocks null + viewer  (editor/author/admin can update)
- *   deleteDocument  → admin only
  */
 @Injectable()
 export class DocumentsService {
@@ -32,7 +15,6 @@ export class DocumentsService {
 
   /**
    * Mirrors: getDocumentById()  in dal/documents/queries.ts
-   * No permission check.
    */
   async getDocumentById(id: string, user: User) {
     const document = await this.prisma.document.findUnique({ where: { id : id, },   include: { 
@@ -42,12 +24,11 @@ export class DocumentsService {
     throw new NotFoundException('Not Found') }
 
     const project = document.project;
-  if(user.role!=='admin' && user.department !== project.department){
-    throw new ForbiddenException('Access denied')
-  }
+     this.requireSameDepartment(user, project.department);
+
     return document;
   }
-
+  
   /**
    * Mirrors: getProjectDocuments()  in dal/documents/queries.ts
    * Drizzle join → Prisma select with nested relation.
@@ -64,9 +45,8 @@ export class DocumentsService {
     throw new NotFoundException('Project not found');
   }
    
-  if(user.role!=='admin' && user.department !== project.department){
-    throw new ForbiddenException('Access denied')
-  }
+    this.requireSameDepartment(user, project.department);
+
     return this.prisma.document.findMany({
       where: { projectId },
       select: {
@@ -105,10 +85,8 @@ export class DocumentsService {
     throw new NotFoundException('Not Found') }
 
     const project = document.project;
-  if(user.role!=='admin' && user.department !== project.department){
-    throw new ForbiddenException('Access denied')
-  }
-    return document;
+      this.requireSameDepartment(user, project.department);
+      return document;
   }
 
   // ── Mutations ─────────────────────────────────────────────────────────────
@@ -119,10 +97,9 @@ export class DocumentsService {
   async createDocument(user: User, projectId: string, dto: CreateDocumentDto) {
     // PERMISSION:
     // FIX: Missing viewer role check
-    if (user.role !== 'admin' && user.role !== 'author') {
-      throw new AuthorizationError('Not allowded!');
-    }
-
+if (!can(user.role, "document:create")) {
+  throw new UnauthorizedException('Not allowded!');
+}
     return this.prisma.document.create({
       data: {
         title: dto.title,
@@ -138,22 +115,12 @@ export class DocumentsService {
 
   /**
    * Mirrors: updateDocument()  in dal/documents/mutations.ts
-   *
-   * PERMISSION:
-   * if (user == null || user.role === "viewer") { throw new AuthorizationError() }
-   *
-   * Result table:
-   *   null   → 403 Forbidden
-   *   viewer → 403 Forbidden
-   *   editor → ✅ ALLOWED
-   *   author → ✅ ALLOWED
-   *   admin  → ✅ ALLOWED
    */
   async updateDocument(user: User, documentId: string, dto: UpdateDocumentDto) {
     // PERMISSION:
-    if (user.role === 'viewer') {
-      throw new AuthorizationError();
-    }
+if (!can(user.role, "document:update")) {
+  throw new UnauthorizedException('Not allowded!');
+}
 
     return this.prisma.document.update({
       where: { id: documentId },
@@ -169,10 +136,16 @@ export class DocumentsService {
    */
   async deleteDocument(user: User, documentId: string) {
     // PERMISSION:
-    if (user.role !== 'admin') {
-      throw new AuthorizationError();
-    }
+if (!can(user.role, "document:delete")) {
+  throw new UnauthorizedException('Not allowded!');
+}
 
     return this.prisma.document.delete({ where: { id: documentId } });
   }
+    // ── Helpers ───────────────────────────────────────────────────────────────
+private requireSameDepartment(user: User, department: string | null) {
+  if (user.role !== 'admin' && user.department !== department) {
+    throw new UnauthorizedException('Access denied');
+  }
+}
 }

@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { AuthorizationExceptionFilter } from './common/filters/authorization-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -15,9 +14,6 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-
-  //   Converts AuthorizationError → HTTP 403 JSON response
-     app.useGlobalFilters(new AuthorizationExceptionFilter());
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

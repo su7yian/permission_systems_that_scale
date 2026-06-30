@@ -1,9 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Prisma, User } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthorizationError } from '../common/errors/authorization.error';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { can } from 'src/authorization/rbac';
 
 /**
  * Mirrors src/dal/projects/queries.ts  AND  src/dal/projects/mutations.ts.
@@ -24,8 +24,8 @@ export class ProjectsService {
 
   /**
    * Mirrors: getAllProjects()  in dal/projects/queries.ts
-   * PERMISSION: must be authenticated; role determines filter.
    */
+  
   async getAllProjects(user: User, ordered: boolean = false) {
 
     return this.prisma.project.findMany({
@@ -36,16 +36,13 @@ export class ProjectsService {
 
   /**
    * Mirrors: getProjectById()  in dal/projects/queries.ts
-   * PERMISSION: none (intentional in Branch 1)
    */
   async getProjectById(id: string, user: User) {
         const project= await this.prisma.project.findUnique({ where: { id } });
        if (!project){
        throw new NotFoundException('Not found');
       }
-      if(user.role !=='admin' && user.department !== project.department){
-         throw new ForbiddenException('Access denied');
-  }
+         this.requireSameDepartment(user, project.department);
        return project;
        }
   // ── Mutations ─────────────────────────────────────────────────────────────
@@ -56,9 +53,9 @@ export class ProjectsService {
    */
   async createProject(user: User, dto: CreateProjectDto) {
     // PERMISSION:
-    if (user.role !== 'admin') {
-      throw new AuthorizationError();
-    }
+if (!can(user.role, "project:create")) {
+  throw new UnauthorizedException('Not allowded!');
+}
 
     return this.prisma.project.create({
       data: {
@@ -76,9 +73,9 @@ export class ProjectsService {
    */
   async updateProject(user: User, projectId: string, dto: UpdateProjectDto) {
     // PERMISSION:
-    if (user.role !== 'admin') {
-      throw new AuthorizationError();
-    }
+if (!can(user.role, "project:update")) {
+  throw new UnauthorizedException('Not allowded!');
+}
 
     return this.prisma.project.update({
       where: { id: projectId },
@@ -92,15 +89,19 @@ export class ProjectsService {
    */
   async deleteProject(user: User, projectId: string) {
     // PERMISSION:
-    if (user.role !== 'admin') {
-      throw new AuthorizationError();
+    if (!can(user.role, "project:delete")) {
+      throw new UnauthorizedException('Not allowded!');
     }
 
     return this.prisma.project.delete({ where: { id: projectId } });
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-
+private requireSameDepartment(user: User, department: string | null) {
+  if (user.role !== 'admin' && user.department !== department) {
+    throw new UnauthorizedException('Access denied');
+  }
+}
   /**
    * Mirrors: userWhereClause()  in dal/projects/queries.ts
    * Returns the Prisma WHERE equivalent of Drizzle's or(eq(...), isNull(...)).
@@ -120,10 +121,10 @@ export class ProjectsService {
           ],
         };
       case 'admin':
-        // Drizzle: return undefined  → no WHERE = all projects
+        //  return undefined  → no WHERE = all projects
         return undefined;
       default:
-        throw new Error(`Unhandled user role: ${user.role}`);
+        throw new InternalServerErrorException(`Unhandled user role: ${user.role}`);
     }
   }
 }
