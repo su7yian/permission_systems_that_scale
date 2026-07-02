@@ -1,7 +1,5 @@
 /**
  * prisma/seed.ts
- * Exact conversion of src/drizzle/seed.ts.
- * Run with:  npm run db:seed   OR   npx prisma db seed
  */
 import "dotenv/config";
 
@@ -266,16 +264,16 @@ async function seed() {
   }
   console.log(`✓ Created ${documents.length} documents`);
 
-  console.log('\n📊 Seed Summary:');
+  console.log('\n Seed Summary:');
   console.log(`   - Users:     ${users.length}`);
   console.log(`   - Projects:  ${projects.length}`);
   console.log(`   - Documents: ${documents.length}`);
-  console.log('\n✅ Database seeded successfully!');
+  console.log('\n Database seeded successfully!');
 }
 
 seed()
   .catch(error => {
-    console.error('❌ Error seeding database:', error);
+    console.error('Error seeding database:', error);
     process.exit(1);
   })
   .finally(async () => {

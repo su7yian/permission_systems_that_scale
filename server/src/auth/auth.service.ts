@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**
- * Mirrors the DAL functions in src/dal/users/queries.ts:
  *   getUsers()        → prisma.user.findMany()
  *   getUserByEmail()  → prisma.user.findUnique({ where: { email } })
  *   getUserById()     → prisma.user.findUnique({ where: { id } })

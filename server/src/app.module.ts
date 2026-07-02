@@ -7,12 +7,12 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    PrismaModule,     // @Global — available everywhere without re-importing
+    PrismaModule,   
     AuthModule,
     ProjectsModule,
     DocumentsModule,
     ConfigModule.forRoot({
-      isGlobal: true, // 👈 Add this line
+      isGlobal: true, 
     }),
   ],
 })

@@ -5,19 +5,20 @@ export function canUpdateDocument(
   user: Pick<User, "role" | "id">,
   document: Pick<Document, "creatorId" | "status" | "isLocked">,
 ): boolean {
+  const isDraft = document.status==='draft';
     // Admins: can edit any document
     if(can(user.role, "document:update:all")){
       return true;
     }
     // Editors: can edit any unlocked document
-    if(can(user.role, "document:update:unlocked") && !document.isLocked) {
+    if(can(user.role, "document:update:published:unlocked") && !document.isLocked && !isDraft ) {
       return true;
     }
     // Authors: only their own, unlocked, draft documents
-    if(can(user.role, "document:update:own-unlocked-draft") &&
+    if(can(user.role, "document:update:draft:unlocked:owner") && isDraft &&
       document.creatorId === user.id &&
-      !document.isLocked &&
-       document.status === "draft"){
+      !document.isLocked
+       ){
         return true;
       }
       return false;

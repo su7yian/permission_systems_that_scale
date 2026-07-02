@@ -7,17 +7,6 @@ import {
 import { Request } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
 
-/**
- * Replaces Next.js getCurrentUser() / session cookies.
- *
- * Flow:
- *   1. Client calls POST /auth/login  → receives { userId: "uuid..." }
- *   2. Client passes userId in every subsequent request as:
- *        Header:  x-user-id: <uuid>
- *   3. This guard reads that header, fetches the User from the DB,
- *      and attaches it to request.currentUser.
- *   4. @CurrentUser() decorator reads request.currentUser in controllers.
- */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
@@ -40,8 +29,8 @@ export class AuthGuard implements CanActivate {
       );
     }
 
-    // Attach the full User object — @CurrentUser() reads this
-    (request as any).currentUser = user;
+    // Attach the full User to express's request object — @CurrentUser() will ask express for request.user, and return it to the controller method.
+    (request as any).user = user;
     return true;
   }
 }

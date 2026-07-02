@@ -1,21 +1,15 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
-/**
- * Mirrors the Zod projectSchema from src/schemas/projects.ts:
- *   name        → string, min 1
- *   description → string, min 1
- *   department  → string (optional in NestJS — may be empty string or absent)
- */
 export class CreateProjectDto {
   @IsString()
-  @MinLength(1, { message: 'Name is required' })
-  name: string;
+  @IsNotEmpty()
+  name!: string;
 
   @IsString()
-  @MinLength(1, { message: 'Description is required' })
-  description: string;
+  @IsOptional()
+  description!: string;
 
   @IsOptional()
   @IsString()
-  department?: string;
+  department?: string | null;
 }

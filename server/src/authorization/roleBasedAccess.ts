@@ -1,56 +1,56 @@
 import { UserRole } from "src/generated/prisma/enums";
 
-type Permissions =
+export type Permissions =
     | "document:create"
-    | "document:read"
-    | "document:read:drafts"
    | "document:delete"
     | "project:create"
-    | "project:read"
     | "project:update"
     | "project:delete"
     | "project:read:all"
-    | "project:read:own:dpt" // documetns can be read in dpt so same deprtment authorization applies
-    | "project:read:non:dpt"
+    | "project:read:ownDpt"
+    | "project:read:noDpt"
+    | "document:read:all"
+    | "document:read:published:ownDpt"
+    | "document:read:published:noDpt"
+    | "document:read:draft:ownDpt"
+    | "document:read:draft:owner"
     | "document:update:all"
-    | "document:update:unlocked"
-    | "document:update:own-unlocked-draft"
+    | "document:update:published:unlocked"
+    | "document:update:draft:unlocked:owner"
 
 const permissionsByRole: Record<UserRole,Permissions[]> ={
     admin: [
     "document:create",
-    "document:read",
-    "document:read:drafts",
+    "document:read:all",
     "document:update:all",
     "document:delete",
     "project:create",
-    "project:read",
     "project:read:all",
     "project:update",
     "project:delete",
-    "document:read:drafts",
     ],
   author:[
-    "document:read",
+     "document:read:published:ownDpt",
+     "document:read:published:noDpt",
+     "document:read:draft:owner",
     "document:create",
-    "document:update:own-unlocked-draft",
-    "project:read",
-    "project:read:own:dpt",
-    "project:read:non:dpt",
+    "document:update:draft:unlocked:owner",
+    "project:read:ownDpt",
+    "project:read:noDpt",
     ],
   editor: [
-     "document:read",
-     "document:update:unlocked",
-     "project:read",
-     "project:read:own:dpt", 
-     "project:read:non:dpt",
-     "document:read:drafts",
+     "document:update:published:unlocked",
+      "document:read:published:ownDpt",
+     "document:read:published:noDpt",
+      "document:read:draft:ownDpt",
+     "project:read:ownDpt", 
+     "project:read:noDpt",
     ],
   viewer: [
-    "document:read",
-    "project:read", 
-    "project:read:own:dpt", 
-    "project:read:non:dpt",
+    "project:read:ownDpt", 
+    "project:read:noDpt",
+    "document:read:published:ownDpt",
+    "document:read:published:noDpt",
   ],
 };
 

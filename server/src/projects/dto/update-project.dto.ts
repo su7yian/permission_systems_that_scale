@@ -1,9 +1,16 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateProjectDto } from './create-project.dto';
+import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
-/**
- * All fields are optional for PATCH/PUT updates.
- * PartialType automatically makes every field from CreateProjectDto optional
- * while keeping the same validation decorators active when a field IS supplied.
- */
-export class UpdateProjectDto extends PartialType(CreateProjectDto) {}
+export class UpdateProjectDto {
+      @IsString()
+      @IsOptional()
+      name?: string;
+    
+      @IsString()
+      @IsOptional()
+      description?: string;
+    
+      @IsOptional()
+      @IsString()
+      department?: string | null;
+    }
+    

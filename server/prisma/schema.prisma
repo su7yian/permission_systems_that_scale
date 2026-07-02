@@ -13,9 +13,6 @@ datasource db {
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// enums  (mirrors Drizzle pgEnum definitions in schema/user.ts & document.ts)
-// ─────────────────────────────────────────────────────────────────────────────
 
 enum UserRole {
   viewer
@@ -31,9 +28,6 @@ enum DocumentStatus {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// User  (mirrors UserTable in src/drizzle/schema/user.ts)
-// ─────────────────────────────────────────────────────────────────────────────
-
 model User {
   id         String   @id @default(uuid())
   email      String   @unique
@@ -51,9 +45,7 @@ model User {
   @@map("users")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Project  (mirrors ProjectTable in src/drizzle/schema/project.ts)
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 model Project {
   id          String   @id @default(uuid())
@@ -71,9 +63,6 @@ model Project {
   @@map("projects")
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Document  (mirrors DocumentTable in src/drizzle/schema/document.ts)
-// ─────────────────────────────────────────────────────────────────────────────
 
 model Document {
   id             String         @id @default(uuid())
