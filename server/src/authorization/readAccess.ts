@@ -28,6 +28,7 @@ export function canReadProject(
      if(can(user.role,"document:read:all")) {
         return true;
      }
+
      if(can(user.role,"document:read:draft:ownDpt") && isDraft && isOwnDept ){
       return true;
      }

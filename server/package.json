@@ -13,7 +13,7 @@
     "prisma:test:deploy": "dotenv -e .env.test -- prisma migrate deploy",
     "test:db:rm": "docker compose rm test-db -s -f -v",
     "test:db:up": "docker compose up test-db -d",
-    "test:db:restart": "npm run test:db:rm && npm run test:db:up --wait && npm run prisma:test:deploy",
+    "test:db:restart": "npm run test:db:rm && npm run test:db:up && sleep 2 && npm run prisma:test:deploy",
     "db:seed": "ts-node --transpile-only prisma/seed.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -27,7 +27,8 @@
     "test:cov": "jest -",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "pretest:int": "npm run test:db:restart",
-    "test:int": "dotenv -e .env.test -- jest --config ./test/jest-integration.json --runInBand"
+    "test:int": "dotenv -e .env.test -- jest --config ./test/jest-int.json --runInBand",
+    "test:unit": "jest --watch --config ./src/jest-unit.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

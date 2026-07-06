@@ -15,7 +15,7 @@ export type Permissions =
     | "document:read:draft:ownDpt"
     | "document:read:draft:owner"
     | "document:update:all"
-    | "document:update:published:unlocked"
+    | "document:update:published:unlocked:ownDpt"
     | "document:update:draft:unlocked:owner"
 
 const permissionsByRole: Record<UserRole,Permissions[]> ={
@@ -33,13 +33,13 @@ const permissionsByRole: Record<UserRole,Permissions[]> ={
      "document:read:published:ownDpt",
      "document:read:published:noDpt",
      "document:read:draft:owner",
+     "document:update:draft:unlocked:owner",
     "document:create",
-    "document:update:draft:unlocked:owner",
     "project:read:ownDpt",
     "project:read:noDpt",
     ],
   editor: [
-     "document:update:published:unlocked",
+     "document:update:published:unlocked:ownDpt",
       "document:read:published:ownDpt",
      "document:read:published:noDpt",
       "document:read:draft:ownDpt",
