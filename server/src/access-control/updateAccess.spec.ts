@@ -1,7 +1,23 @@
 import { UserRole, DocumentStatus } from "../generated/prisma/client";
 import { test, describe, expect } from '@jest/globals';
-import { canReadDocument } from "./readAccess";
 import { canUpdateDocument } from "./updateAcess";
+
+/*
+Rules:
+- When expecting access to be false, you take inner most restrictive case, and all outer will be covered as false.
+- When expecting access to be true, you take inner most permisive case, and all inner will be covered as true.
+- If a single attribute is decisive and restrictive, test it while keeping the other such a attributes most permissive.
+- If a single attribute is decisive and permisive, test it while making the other such attributes most restrictive.
+- Don't skip a case merely because its obvious to you; skip it only when the tested case logically covers it.
+  
+Effective test reduced:
+  96 possible combinations → 34 tests (scalable test count reduces more as permissions increase. )
+
+  Instead of engineering, finance, bob, alice
+  The test uses used relationship-based values such as own,any, self
+  Now the test cases described the permission itself rather than arbitrary data.
+
+*/
 describe('canUpdateDocument', () => {
   const user = (role: UserRole) =>
     ({

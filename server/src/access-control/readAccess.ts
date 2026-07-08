@@ -1,7 +1,13 @@
+import { permission } from "process";
 import { Document, Project, User } from "../generated/prisma/client";
 import {can} from "./roleBasedAccess";
 
-export function canReadProject(
+/*
+ First add permissions in role based access file carefully, then here ensure every permission string
+ is covered relation  to actiona dn resource in context, then just match; 
+ validate eveery attribute ins trign corresponds to the resource attributes in context, then return true or false
+*/
+ export function canReadProject(
     user: Pick< User, "role" | "department">,
      project: Pick<Project,"department">
     ):boolean{

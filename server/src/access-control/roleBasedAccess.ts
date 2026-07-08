@@ -1,5 +1,6 @@
-import { UserRole } from "src/generated/prisma/enums";
+import { UserRole } from "../generated/prisma/enums";
 
+// resource:action:attribute:attribute...
 export type Permissions =
     | "document:create"
    | "document:delete"

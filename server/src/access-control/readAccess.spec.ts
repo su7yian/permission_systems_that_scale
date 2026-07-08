@@ -2,6 +2,23 @@ import { UserRole, DocumentStatus } from "../generated/prisma/client";
 import { test, describe, expect } from '@jest/globals';
 import { canReadDocument,canReadProject } from "./readAccess";
 
+/*
+Rules:
+- When expecting access to be false, you take inner most restrictive case, and all outer will be covered as false.
+- When expecting access to be true, you take inner most permisive case, and all inner will be covered as true.
+- If a single attribute is decisive and restrictive, test it while keeping the other such a attributes most permissive.
+- If a single attribute is decisive and permisive, test it while making the other such attributes most restrictive.
+- Don't skip a case merely because its obvious to you; skip it only when the tested case logically covers it.
+  
+Effective test reduced:
+  12 possible combinations → 11 tests
+  48 possible combinations → 22 tests (scalable test count reduces more as permissions increase. see update spec access )
+
+  Instead of engineering, finance, bob, alice
+  The test uses used relationship-based values such as own,any, self
+  Now the test cases described the permission itself rather than arbitrary data.
+
+*/
 describe('canRead',()=> {
 describe('canReadProject', () => {
   const user = (role: UserRole) =>
@@ -97,17 +114,3 @@ describe('canReadDocument', () => {
   });
 });
 });
-/*
-In permissions that are subset of others yu can reduce tests cases by:
-If a permission for role is allowding then expect all subset of permissions at allowded level to be true. all inenr will be proven true if you prove outer.
-If a permission for role is denying thne expect all outer sets of permissions at restrictive level to be false. all above will be proven false.
-If a permission is restrictive for desesive attribute then expect outer set of decisive permission to be false 
-and keep all other permissions most restrictive whereas, expect allowded set of decisive permission 
-to be true and keep all other permissions most allowding.
-this same rule also applies to non scoped/binary permissions too, if the desesive is that non scoped / binary permission but if desesive is set / subset of permissions then all birnary cases.
-lets take exampel we have permissions like creaotr which could be anyone or self self is subset of anyone 
-and a permsision any dpt or owndpt own dpt is subset of nay spt if no one desicdes then you will have always a way out ... 
-its only for permission with set and subset... you have to make either one or both dessesive 
-if both then expect outer range of all desesive subsets to be false as it will false all above permissions.
-and expect the allowdded subset with both attributes exactly to be true.  
-*/
