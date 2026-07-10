@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
-import { AuthGuard } from '../common/guards/auth.guard';
+import { JwtAccessGuard } from '../auth/guards/jwt.guard';
 
 @Module({
   controllers: [DocumentsController],
-  // AuthGuard must be listed here so NestJS can inject PrismaService into it
-  providers: [DocumentsService, AuthGuard],
+  // JwtAccessGuard must be listed here so NestJS can inject PrismaService into it
+  providers: [DocumentsService, JwtAccessGuard],
 })
 export class DocumentsModule {}

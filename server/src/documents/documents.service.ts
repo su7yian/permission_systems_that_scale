@@ -1,27 +1,28 @@
-import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { User } from '../generated/prisma/client';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { PayloadType } from '../auth/payload-type';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
-import { can } from 'src/authorization/roleBasedAccess';
-import { canReadDocument } from 'src/authorization/readAccess';
-import { canUpdateDocument } from 'src/authorization/updateAcess';
-import { documentsWhereClause } from '../authorization/userWhereClause';
+import { can } from '../access-control/roleBasedAccess';
+import { canReadDocument } from '../access-control/readAccess';
+import { canUpdateDocument } from '../access-control/updateAcess';
+import { documentsWhereClause } from '../access-control/userWhereClause';
  
 @Injectable()
 export class DocumentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ── Queries ───────────────────────────────────────────────────────────────
 
-    async getDocumentById(id: string, user: User) {
+
+  async getDocumentById(id: string, payload: PayloadType) {
     const document = await this.prisma.document.findUnique({ where: { id : id, },   include: { 
     project: true // This pulls the related project data into the object
   } });
   if (!document) { 
-    throw new NotFoundException('Not Found') }
+    throw new NotFoundException('Not Found')
+   }
     
-        if(!canReadDocument(user, document)){ 
+   if(!canReadDocument(payload, document)){ 
           throw new UnauthorizedException();
         }
     
@@ -29,13 +30,13 @@ export class DocumentsService {
 }
 
   
-  async getProjectDocuments(project_id: string, user: User ) {
+  async getProjectDocuments(project_id: string, payload: PayloadType ) {
  
     const document = await this.prisma.document.findMany({
       where: {
         AND: [
         {projectId: project_id},
-        documentsWhereClause(user) ?? {}
+        documentsWhereClause(payload) ?? {}
         ],
       },
       select: {
@@ -54,8 +55,8 @@ export class DocumentsService {
   return document;
   }
 
-   // Mirrors: getDocumentWithUserInfo()  in dal/documents/queries.ts
-  async getDocumentWithUserInfo(id: string, user: User) {
+
+  async getDocumentWithUserInfo(id: string, payload: PayloadType) {
     const document= await this.prisma.document.findUnique({
       where: { id },
       include: {
@@ -66,16 +67,16 @@ export class DocumentsService {
   if (!document) { 
     throw new NotFoundException('Not Found') }
 
-        if(!canReadDocument(user, document)){ 
+        if(!canReadDocument(payload, document)){ 
           throw new UnauthorizedException();
         }
     return document;
   }
 
-  // ── Mutations ─────────────────────────────────────────────────────────────
   
-  async createDocument(user: User, projectId: string, dto: CreateDocumentDto) {
-if (!can(user.role, "document:create")) {
+  
+  async createDocument(payload: PayloadType, projectId: string, dto: CreateDocumentDto) {
+if (!can(payload.role, "document:create")) {
   throw new UnauthorizedException('Not allowded!');
 }
     return this.prisma.document.create({
@@ -85,14 +86,14 @@ if (!can(user.role, "document:create")) {
         status: dto.status,
         isLocked: dto.isLocked,
         projectId,
-        creatorId: user.id,
-        lastEditedById: user.id,
+        creatorId: payload.id,
+        lastEditedById: payload.id,
       },
     });
   }
 
-  async updateDocument(user: User, documentId: string, dto: UpdateDocumentDto) {
-    // PERMISSION:
+  async updateDocument(payload: PayloadType, documentId: string, dto: UpdateDocumentDto) {
+
 if(!canUpdateDocument){
   throw new UnauthorizedException();
 } 
@@ -100,14 +101,14 @@ if(!canUpdateDocument){
       where: { id: documentId },
       data: {
         ...dto,
-        lastEditedById: user.id,
+        lastEditedById: payload.id,
       },
     });
   }
    
-  async deleteDocument(user: User, documentId: string) {
-    // PERMISSION:
-if (!can(user.role, "document:delete")) {
+  async deleteDocument(payload: PayloadType, documentId: string) {
+
+if (!can(payload.role, "document:delete")) {
   throw new UnauthorizedException('Not allowded!');
 }
 

@@ -1,37 +1,37 @@
-import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import {  User } from '../generated/prisma/client';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { PayloadType } from '../auth/payload-type';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { can } from 'src/authorization/roleBasedAccess';
-import { canReadProject } from '../authorization/readAccess';
-import { projectsWhereClause } from '../authorization/userWhereClause';
+import { can } from '../access-control/roleBasedAccess';
+import { canReadProject } from '../access-control/readAccess';
+import { projectsWhereClause } from '../access-control/userWhereClause';
 
 @Injectable()
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
   
-  async getAllProjects(user: User, ordered: boolean = false) {
+  async getAllProjects(payload: PayloadType, ordered: boolean = false) {
 
     return this.prisma.project.findMany({
-      where: projectsWhereClause(user),
+      where: projectsWhereClause(payload),
       orderBy: ordered ? { name: 'asc' } : undefined,
     });
   }
 
-  async getProjectById(id: string, user: User) {
+  async getProjectById(id: string, payload: PayloadType) {
         const project= await this.prisma.project.findUnique({ where: { id } });
        if (!project){
        throw new NotFoundException('Not found');
       }
-        if(!canReadProject(user, project)){ 
+        if(!canReadProject(payload, project)){ 
           throw new UnauthorizedException();
         }
       return project;
        }
 
-  async createProject(user: User, dto: CreateProjectDto) {
-if (!can(user.role, "project:create")) {
+  async createProject(payload: PayloadType, dto: CreateProjectDto) {
+if (!can(payload.role, "project:create")) {
   throw new UnauthorizedException('Not allowded!');
 }
 
@@ -39,15 +39,15 @@ if (!can(user.role, "project:create")) {
       data: {
         name: dto.name,
         description: dto.description,
-        ownerId: user.id,
+        ownerId: payload.id,
         department: dto.department || null,
       },
     });
   }
 
-  async updateProject(user: User, projectId: string, dto: UpdateProjectDto) {
+  async updateProject(payload: PayloadType, projectId: string, dto: UpdateProjectDto) {
     // PERMISSION:
-if (!can(user.role, "project:update")) {
+if (!can(payload.role, "project:update")) {
   throw new UnauthorizedException('Not allowded!');
 }
 
@@ -57,8 +57,8 @@ if (!can(user.role, "project:update")) {
     });
   }
 
-  async deleteProject(user: User, projectId: string) {
-    if (!can(user.role, "project:delete")) {
+  async deleteProject(payload: PayloadType, projectId: string) {
+    if (!can(payload.role, "project:delete")) {
       throw new UnauthorizedException('Not allowded!');
     }
 

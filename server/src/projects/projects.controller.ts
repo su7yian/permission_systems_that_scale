@@ -9,54 +9,54 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { User } from '../generated/prisma/client';
-import { AuthGuard } from '../common/guards/auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PayloadType } from '../auth/payload-type';
+import { JwtAccessGuard } from '../auth/guards/jwt.guard';
+import { CurrentPayload } from '../decorators/current-payload.decorator';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
 @Controller('projects')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAccessGuard)
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Get()
   getAllProjects(
-    @CurrentUser() user: User,
+    @CurrentPayload() payload: PayloadType,
     @Query('ordered') ordered?: boolean,
   ) {
-    return this.projectsService.getAllProjects(user, ordered);
+    return this.projectsService.getAllProjects(payload, ordered);
   }
 
   @Get(':id')
-  getProjectById(@Param('id') id: string, @CurrentUser() user: User,
+  getProjectById(@Param('id') id: string, @CurrentPayload() payload: PayloadType,
   ) {
-    return this.projectsService.getProjectById(id, user);
+    return this.projectsService.getProjectById(id, payload);
   }
 
   @Post()
   createProject(
-    @CurrentUser() user: User,
+    @CurrentPayload() payload: PayloadType,
     @Body() dto: CreateProjectDto,
   ) {
-    return this.projectsService.createProject(user, dto);
+    return this.projectsService.createProject(payload, dto);
   }
 
   @Put(':id')
   updateProject(
-    @CurrentUser() user: User,
+    @CurrentPayload() payload: PayloadType,
     @Param('id') id: string,
     @Body() dto: UpdateProjectDto,
   ) {
-    return this.projectsService.updateProject(user, id, dto,);
+    return this.projectsService.updateProject(payload, id, dto,);
   }
 
   @Delete(':id')
   deleteProject(
-    @CurrentUser() user: User,
+    @CurrentPayload() payload: PayloadType,
     @Param('id') id: string,
   ) {
-    return this.projectsService.deleteProject(user, id);
+    return this.projectsService.deleteProject(payload, id);
   }
 }

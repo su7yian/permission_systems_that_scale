@@ -8,56 +8,56 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { User } from '../generated/prisma/client';
-import { AuthGuard } from '../common/guards/auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PayloadType } from '../auth/payload-type';
+import { CurrentPayload } from '../decorators/current-payload.decorator';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
+import { JwtAccessGuard } from '../auth/guards/jwt.guard';
 
 @Controller()
-@UseGuards(AuthGuard)
+@UseGuards(JwtAccessGuard)
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
   @Get('projects/:projectId/documents')
-  getProjectDocuments(@Param('projectId') projectId: string, @CurrentUser() user: User) {
-    return this.documentsService.getProjectDocuments(projectId, user);
+  getProjectDocuments(@Param('projectId') projectId: string, @CurrentPayload() payload: PayloadType) {
+    return this.documentsService.getProjectDocuments(projectId, payload);
   }
 
   @Get('documents/:id')
-  getDocumentById(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.documentsService.getDocumentById(id, user);
+  getDocumentById(@Param('id') id: string, @CurrentPayload() payload: PayloadType) {
+    return this.documentsService.getDocumentById(id, payload);
   }
 
   @Get('documents/:id/full')
-  getDocumentWithUserInfo(@Param('id') id: string,  @CurrentUser() user: User) {
-    return this.documentsService.getDocumentWithUserInfo(id, user);
+  getDocumentWithUserInfo(@Param('id') id: string,  @CurrentPayload() payload: PayloadType) {
+    return this.documentsService.getDocumentWithUserInfo(id, payload);
   }
 
   @Post('projects/:projectId/documents')
   createDocument(
-    @CurrentUser() user: User,
+    @CurrentPayload() payload: PayloadType,
     @Param('projectId') projectId: string,
     @Body() dto: CreateDocumentDto,
   ) {
-    return this.documentsService.createDocument(user, projectId, dto);
+    return this.documentsService.createDocument(payload, projectId, dto);
   }
 
   @Put('documents/:id')
   updateDocument(
-    @CurrentUser() user: User,
+    @CurrentPayload() payload: PayloadType,
     @Param('id') id: string,
     @Body() dto: UpdateDocumentDto,
   ) {
-    return this.documentsService.updateDocument(user, id, dto);
+    return this.documentsService.updateDocument(payload, id, dto);
   }
 
   @Delete('documents/:id')
   deleteDocument(
-    @CurrentUser() user: User,
+    @CurrentPayload() payload: PayloadType,
     @Param('id') id: string,
   ) {
-    return this.documentsService.deleteDocument(user, id);
+    return this.documentsService.deleteDocument(payload, id);
   }
 }

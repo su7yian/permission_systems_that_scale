@@ -1,0 +1,99 @@
+POST http://localhost:3000/auth/signup
+Content-Type: application/json
+
+{
+    "email": "ahgc.doe@example.com",
+    "password": "securepassword",
+    "name": "John Doe",
+    "role": "admin",
+    "department": "martech"
+}
+
+###
+GET http://localhost:3000/auth/signout
+Authorization: Bearer t_a
+
+###
+POST http://localhost:3000/auth/signin
+Content-Type: application/json
+
+{
+"email": "ahgc.doe@example.com",
+"password": "securepassword"
+}
+ 
+
+###
+GET http://localhost:3000/user/profile
+Authorization: Bearer t_a
+###
+POST http://localhost:3000/auth/refresh
+Authorization: Bearer t_f
+
+
+###
+PATCH http://localhost:3000/user/password
+Content-Type: application/json
+Authorization: Bearer t_a
+
+{
+    "old_password": "1234",
+    "new_password": "securepassword"
+}
+
+
+### -----------------------------------------------------------------------------
+
+
+###
+# Projects controller smoke test
+GET http://localhost:3000/projects
+Authorization: Bearer t_a
+
+###
+POST http://localhost:3000/projects
+Content-Type: application/json
+Authorization: Bearer t_a
+
+{
+  "name": "Demo Project",
+  "description": "Smoke test project",
+  "department": "martech"
+}
+
+###
+# Documents controller smoke test
+GET http://localhost:3000/projects/pid/documents
+Authorization: Bearer t_a
+
+###
+POST http://localhost:3000/projects/pid/documents
+Content-Type: application/json
+Authorization: Bearer t_a
+
+{
+  "title": "Demo document",
+  "content": "This is a smoke test document.",
+  "st_atus": "draft",
+  "isLocked": false
+}
+
+###
+GET http://localhost:3000/documents/did
+Authorization: Bearer t_a
+
+###
+GET http://localhost:3000/documents/did/full
+Authorization: Bearer t_a
+
+###
+PUT http://localhost:3000/documents/did
+Content-Type: application/json
+Authorization: Bearer t_a
+
+{
+  "title": "Updated demo document",
+  "content": "Updated content for smoke test.",
+  "st_atus": "draft",
+  "isLocked": false
+}

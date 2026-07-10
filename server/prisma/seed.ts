@@ -21,15 +21,15 @@ async function seed() {
   // ── Create users across different roles and departments ─────────────────
   const usersData = [
     // Engineering Department
-    { email: 'admin.eng@example.com',    name: 'Alice',   role: UserRole.admin,  department: 'Engineering' },
-    { email: 'author.eng@example.com',   name: 'Bob',     role: UserRole.author, department: 'Engineering' },
-    { email: 'editor.eng@example.com',   name: 'Charlie', role: UserRole.editor, department: 'Engineering' },
-    { email: 'viewer.eng@example.com',   name: 'Diana',   role: UserRole.viewer, department: 'Engineering' },
+    { email: 'admin.eng@example.com',    name: 'Alice', password:'abc123',   role: UserRole.admin,  department: 'Engineering' },
+    { email: 'author.eng@example.com',   name: 'Bob',     password:'abc123', role: UserRole.author, department: 'Engineering' },
+    { email: 'editor.eng@example.com',   name: 'Charlie', password:'abc123', role: UserRole.editor, department: 'Engineering' },
+    { email: 'viewer.eng@example.com',   name: 'Diana',   password:'abc123',   role: UserRole.viewer, department: 'Engineering' },
     // Marketing Department
-    { email: 'admin.marketing@example.com',  name: 'Eve',   role: UserRole.admin,  department: 'Marketing' },
-    { email: 'author.marketing@example.com', name: 'Frank', role: UserRole.author, department: 'Marketing' },
-    { email: 'editor.marketing@example.com', name: 'Grace', role: UserRole.editor, department: 'Marketing' },
-    { email: 'viewer.marketing@example.com', name: 'Henry', role: UserRole.viewer, department: 'Marketing' },
+    { email: 'admin.marketing@example.com',  name: 'Eve',   password:'abc123',   role: UserRole.admin,  department: 'Marketing' },
+    { email: 'author.marketing@example.com', name: 'Frank', password:'abc123', role: UserRole.author, department: 'Marketing' },
+    { email: 'editor.marketing@example.com', name: 'Grace', password:'abc123', role: UserRole.editor, department: 'Marketing' },
+    { email: 'viewer.marketing@example.com', name: 'Henry', password:'abc123', role: UserRole.viewer, department: 'Marketing' },
   ];
 
   const users: { id: string; email: string }[] = [];
