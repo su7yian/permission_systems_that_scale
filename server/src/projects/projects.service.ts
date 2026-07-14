@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PayloadType } from '../auth/payload-type';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -10,9 +14,8 @@ import { projectsWhereClause } from '../access-control/userWhereClause';
 @Injectable()
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
-  
-  async getAllProjects(payload: PayloadType, ordered: boolean = false) {
 
+  async getAllProjects(payload: PayloadType, ordered: boolean = false) {
     return this.prisma.project.findMany({
       where: projectsWhereClause(payload),
       orderBy: ordered ? { name: 'asc' } : undefined,
@@ -20,20 +23,20 @@ export class ProjectsService {
   }
 
   async getProjectById(id: string, payload: PayloadType) {
-        const project= await this.prisma.project.findUnique({ where: { id } });
-       if (!project){
-       throw new NotFoundException('Not found');
-      }
-        if(!canReadProject(payload, project)){ 
-          throw new UnauthorizedException();
-        }
-      return project;
-       }
+    const project = await this.prisma.project.findUnique({ where: { id } });
+    if (!project) {
+      throw new NotFoundException('Not found');
+    }
+    if (!canReadProject(payload, project)) {
+      throw new ForbiddenException();
+    }
+    return project;
+  }
 
   async createProject(payload: PayloadType, dto: CreateProjectDto) {
-if (!can(payload.role, "project:create")) {
-  throw new UnauthorizedException('Not allowded!');
-}
+    if (!can(payload.role, 'project:create')) {
+      throw new ForbiddenException('Not allowded!');
+    }
 
     return this.prisma.project.create({
       data: {
@@ -45,11 +48,22 @@ if (!can(payload.role, "project:create")) {
     });
   }
 
-  async updateProject(payload: PayloadType, projectId: string, dto: UpdateProjectDto) {
+  async updateProject(
+    payload: PayloadType,
+    projectId: string,
+    dto: UpdateProjectDto,
+  ) {
     // PERMISSION:
-if (!can(payload.role, "project:update")) {
-  throw new UnauthorizedException('Not allowded!');
-}
+    if (!can(payload.role, 'project:update')) {
+      throw new ForbiddenException('Not allowded!');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
 
     return this.prisma.project.update({
       where: { id: projectId },
@@ -58,8 +72,15 @@ if (!can(payload.role, "project:update")) {
   }
 
   async deleteProject(payload: PayloadType, projectId: string) {
-    if (!can(payload.role, "project:delete")) {
-      throw new UnauthorizedException('Not allowded!');
+    if (!can(payload.role, 'project:delete')) {
+      throw new ForbiddenException('Not allowded!');
+    }
+
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+    if (!project) {
+      throw new NotFoundException('Project not found');
     }
 
     return this.prisma.project.delete({ where: { id: projectId } });

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PayloadType } from '../auth/payload-type';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
@@ -7,37 +11,33 @@ import { can } from '../access-control/roleBasedAccess';
 import { canReadDocument } from '../access-control/readAccess';
 import { canUpdateDocument } from '../access-control/updateAcess';
 import { documentsWhereClause } from '../access-control/userWhereClause';
- 
+
 @Injectable()
 export class DocumentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-
-
   async getDocumentById(id: string, payload: PayloadType) {
-    const document = await this.prisma.document.findUnique({ where: { id : id, },   include: { 
-    project: true // This pulls the related project data into the object
-  } });
-  if (!document) { 
-    throw new NotFoundException('Not Found')
-   }
-    
-   if(!canReadDocument(payload, document)){ 
-          throw new UnauthorizedException();
-        }
-    
-    return document;
-}
+    const document = await this.prisma.document.findUnique({
+      where: { id: id },
+      include: {
+        project: true, // This pulls the related project data into the object
+      },
+    });
+    if (!document) {
+      throw new NotFoundException('Not Found');
+    }
 
-  
-  async getProjectDocuments(project_id: string, payload: PayloadType ) {
- 
-    const document = await this.prisma.document.findMany({
+    if (!canReadDocument(payload, document)) {
+      throw new ForbiddenException();
+    }
+
+    return document;
+  }
+
+  async getProjectDocuments(project_id: string, payload: PayloadType) {
+    return this.prisma.document.findMany({
       where: {
-        AND: [
-        {projectId: project_id},
-        documentsWhereClause(payload) ?? {}
-        ],
+        AND: [{ projectId: project_id }, documentsWhereClause(payload) ?? {}],
       },
       select: {
         id: true,
@@ -49,36 +49,35 @@ export class DocumentsService {
       },
       orderBy: { createdAt: 'asc' },
     });
-      if (!document) {
-    throw new NotFoundException('Project not found');
   }
-  return document;
-  }
-
 
   async getDocumentWithUserInfo(id: string, payload: PayloadType) {
-    const document= await this.prisma.document.findUnique({
+    const document = await this.prisma.document.findUnique({
       where: { id },
       include: {
-        creator:      { select: { name: true } },
+        creator: { select: { name: true } },
         lastEditedBy: { select: { name: true } },
         project: true, // This pulls the related project data into the object
-  } });
-  if (!document) { 
-    throw new NotFoundException('Not Found') }
+      },
+    });
+    if (!document) {
+      throw new NotFoundException('Not Found');
+    }
 
-        if(!canReadDocument(payload, document)){ 
-          throw new UnauthorizedException();
-        }
+    if (!canReadDocument(payload, document)) {
+      throw new ForbiddenException();
+    }
     return document;
   }
 
-  
-  
-  async createDocument(payload: PayloadType, projectId: string, dto: CreateDocumentDto) {
-if (!can(payload.role, "document:create")) {
-  throw new UnauthorizedException('Not allowded!');
-}
+  async createDocument(
+    payload: PayloadType,
+    projectId: string,
+    dto: CreateDocumentDto,
+  ) {
+    if (!can(payload.role, 'document:create')) {
+      throw new ForbiddenException('Not allowded!');
+    }
     return this.prisma.document.create({
       data: {
         title: dto.title,
@@ -92,11 +91,22 @@ if (!can(payload.role, "document:create")) {
     });
   }
 
-  async updateDocument(payload: PayloadType, documentId: string, dto: UpdateDocumentDto) {
+  async updateDocument(
+    payload: PayloadType,
+    documentId: string,
+    dto: UpdateDocumentDto,
+  ) {
+    const document = await this.prisma.document.findUnique({
+      where: { id: documentId },
+      include: { project: { select: { department: true } } },
+    });
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
 
-if(!canUpdateDocument){
-  throw new UnauthorizedException();
-} 
+    if (!canUpdateDocument(payload, document)) {
+      throw new ForbiddenException();
+    }
     return this.prisma.document.update({
       where: { id: documentId },
       data: {
@@ -105,14 +115,19 @@ if(!canUpdateDocument){
       },
     });
   }
-   
-  async deleteDocument(payload: PayloadType, documentId: string) {
 
-if (!can(payload.role, "document:delete")) {
-  throw new UnauthorizedException('Not allowded!');
-}
+  async deleteDocument(payload: PayloadType, documentId: string) {
+    if (!can(payload.role, 'document:delete')) {
+      throw new ForbiddenException('Not allowded!');
+    }
+
+    const document = await this.prisma.document.findUnique({
+      where: { id: documentId },
+    });
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
 
     return this.prisma.document.delete({ where: { id: documentId } });
   }
-
 }
